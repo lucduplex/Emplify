@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block title %}Téléchargement de CV et Lettre de Motivation{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+  <h1 class="text-center mb-4 text-primary">Téléchargez votre CV et Lettre de Motivation</h1>
+  <p class="text-center text-muted mb-4">
+    Déposez votre CV et lettre de motivation pour postuler aux meilleures offres d’emploi.
+  </p>
+  
+  <form method="POST" enctype="multipart/form-data" class="shadow p-5 bg-white rounded">
+    {% csrf_token %}
+    
+    <!-- Champ pour le CV -->
+    <div class="form-group">
+      <label for="id_cv" class="font-weight-bold">Télécharger votre CV (PDF ou Word) :</label>
+      <input
+        type="file"
+        name="cv"
+        accept=".pdf,.doc,.docx"
+        class="form-control-file mt-2"
+        id="id_cv"
+      />
+      {% if form.cv.errors %}
+        <div class="alert alert-danger mt-2">
+          {% for error in form.cv.errors %}
+            {{ error }}<br>
+          {% endfor %}
+        </div>
+      {% endif %}
+    </div>
+    
+    <!-- Champ pour la Lettre de Motivation -->
+    <div class="form-group mt-4">
+      <label for="id_lettres_motivation" class="font-weight-bold">Télécharger votre Lettre de Motivation (PDF ou Word) :</label>
+      <input
+        type="file"
+        name="lettres_motivation"
+        accept=".pdf,.doc,.docx"
+        class="form-control-file mt-2"
+        id="id_lettres_motivation"
+      />
+      {% if form.lettres_motivation.errors %}
+        <div class="alert alert-danger mt-2">
+          {% for error in form.lettres_motivation.errors %}
+            {{ error }}<br>
+          {% endfor %}
+        </div>
+      {% endif %}
+    </div>
+    
+    <!-- Champ pour les compétences -->
+    <div class="form-group mt-4">
+      <label for="id_competences" class="font-weight-bold">Compétences :</label>
+      <textarea 
+        name="competences" 
+        class="form-control mt-2" 
+        id="id_competences" 
+        rows="4" 
+        placeholder="Décrivez vos compétences et expériences...">{{ form.competences.value }}</textarea>
+    </div>
+    
+    <!-- Bouton d'envoi -->
+    <div class="text-center mt-5">
+      <button type="submit" class="btn btn-primary btn-lg px-5">Envoyer</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

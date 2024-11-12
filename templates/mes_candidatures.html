@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block title %}Candidatures reçues{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-10">
+      <h1 class="text-center mb-4">Candidatures reçues</h1>
+      {% if candidatures %}
+      <div class="table-responsive">
+        <table class="table table-hover table-bordered text-center shadow-sm">
+          <thead class="thead-dark">
+            <tr>
+              <th><i class="fas fa-user"></i> Candidat</th>
+              <th><i class="fas fa-briefcase"></i> Offre d'emploi</th>
+              <th><i class="fas fa-calendar-alt"></i> Date de postulation</th>
+              <th><i class="fas fa-file-download"></i> CV</th>
+              <th><i class="fas fa-file-alt"></i> Lettre de motivation</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for candidature in candidatures %}
+            <tr>
+              <td>{{ candidature.candidat.username }}</td>
+              <td>{{ candidature.offre.titre }}</td>
+              <td>{{ candidature.date_postulation|date:"d M Y" }}</td>
+              <td>
+                <a href="{{ candidature.cv.url }}" target="_blank" class="btn btn-outline-primary btn-sm">
+                  Télécharger CV
+                </a>
+              </td>
+              <td>
+                <a href="{{ candidature.lettre_motivation.url }}" target="_blank" class="btn btn-outline-secondary btn-sm">
+                  Télécharger Lettre
+                </a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="alert alert-info text-center mt-4" role="alert">
+        <i class="fas fa-info-circle"></i> Aucune candidature reçue pour le moment.
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

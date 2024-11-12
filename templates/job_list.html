@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block title %}Offres d'Emploi{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+  <h1 class="text-center mb-4"><i class="fas fa-briefcase"></i> Offres d'Emploi Disponibles</h1>
+
+  <!-- Barre de recherche -->
+  <form method="GET" action="{% url 'search_job_offers' %}" class="mb-4">
+    <div class="input-group">
+      <input
+        type="text"
+        name="q"
+        class="form-control"
+        placeholder="Rechercher des offres..."
+        aria-label="Rechercher des offres"
+      />
+      <div class="input-group-append">
+        <button type="submit" class="btn btn-primary"><i class="fas fa-search"></i> Rechercher</button>
+      </div>
+    </div>
+  </form>
+
+  <!-- Liste des offres d'emploi -->
+  <ul class="list-group">
+    {% for job in jobs %}
+      <li class="list-group-item mb-3 shadow-sm">
+        <h5>
+          <a href="{% url 'job_detail' job.id %}" class="text-primary">{{ job.titre }}</a>
+        </h5>
+        <p class="text-muted">{{ job.description|truncatewords:20 }}</p>
+        <p><strong>Compétences requises :</strong> {{ job.competences_requises }}</p>
+        <p><strong>Salaire :</strong> {{ job.salaire }} $</p>
+        <p><strong>Localisation :</strong> {{ job.localisation }}</p>
+        <small><em>Publié le : {{ job.date_publication|date:"d/m/Y" }}</em></small>
+        <div class="mt-3">
+          <a href="{% url 'job_detail' job.id %}" class="btn btn-outline-primary btn-sm mr-2">
+            <i class="fas fa-info-circle"></i> Détails de l'emploi
+          </a>
+
+          {% if user.role == 'RECRUTEUR' %}
+          <a href="{% url 'mes_candidatures' %}" class="btn btn-outline-secondary btn-sm">
+            <i class="fas fa-users"></i> Voir les candidats
+          </a>
+          {% endif %}
+        </div>
+      </li>
+    {% empty %}
+      <li class="list-group-item text-center">Aucune offre d'emploi disponible.</li>
+    {% endfor %}
+  </ul>
+</div>
+{% endblock %}

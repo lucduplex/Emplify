@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block title %}Accueil{% endblock %}
+
+{% block content %}
+<div class="jumbotron text-center mb-5 bg-primary text-white">
+    <h1 class="display-4"><i class="fas fa-briefcase"></i> Bienvenue sur le site de Recherche d'Emploi</h1>
+    <p class="lead">Trouvez l'emploi de vos rêves ou publiez une offre pour attirer les meilleurs talents.</p>
+    <a class="btn btn-outline-light btn-lg" href="{% url 'job_list' %}" role="button">Voir toutes les Offres</a>
+</div>
+
+<div class="container">
+    <h2 class="text-center my-4"><i class="fas fa-bullhorn"></i> Dernières Offres d'Emploi</h2>
+    <div class="row">
+        {% for job in jobs %}
+            <div class="col-md-4 mb-4">
+                <div class="card shadow-sm h-100">
+                    <div class="card-body d-flex flex-column">
+                        <h5 class="card-title"><i class="fas fa-briefcase"></i> {{ job.titre }}</h5>
+                        <p class="card-text text-muted">{{ job.description|truncatewords:20 }}</p>
+                        <p class="text-secondary"><i class="fas fa-map-marker-alt"></i> <strong>Localisation :</strong> {{ job.localisation }}</p>
+                        <div class="mt-auto">
+                            <a href="{% url 'job_detail' job.id %}" class="btn btn-outline-primary btn-block">Voir Détails</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% empty %}
+            <div class="col-12">
+                <p class="text-center">Aucune offre d'emploi disponible pour le moment.</p>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

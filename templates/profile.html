@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block title %}Profil{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="card shadow-lg">
+        <div class="card-header bg-primary text-white">
+            <h2 class="card-title mb-0">Profil de {{ user.username }}</h2>
+        </div>
+        <div class="card-body">
+            <p><strong>Email :</strong> {{ user.email }}</p>
+            <p><strong>Rôle :</strong> {{ user.get_role_display }}</p>
+            <p><strong>Statut :</strong> {{ user.get_statut_display }}</p>
+            <p><strong>Plan d'Abonnement :</strong> {{ user.get_plan_abonnement_display }}</p>
+
+            {% if user.role == 'CANDIDAT' %}
+                <hr>
+                <h5>Informations Candidat</h5>
+                <p><strong>Compétences :</strong> {{ user.candidat.competences }}</p>
+            {% elif user.role == 'RECRUTEUR' %}
+                <hr>
+                <h5>Informations Recruteur</h5>
+                <p><strong>Entreprise :</strong> {{ user.recruteur.entreprise }}</p>
+                <p><strong>Secteur d'Activité :</strong> {{ user.recruteur.secteur_activite }}</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

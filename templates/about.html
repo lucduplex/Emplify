@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Emplify - À propos de nous{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="card shadow-lg mb-4">
+                <div class="card-header bg-primary text-white text-center">
+                    <h4><i class="fas fa-info-circle"></i> À propos de nous</h4>
+                </div>
+                <div class="card-body">
+                    <p class="lead text-center">
+                        Notre mission est de faciliter la mobilité pour tous. Que vous soyez en pleine forme ou que vous ayez des besoins spécifiques, nous nous engageons à rendre la transportation accessible, rapide, et abordable.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Sections with icons and Bootstrap styling -->
+            {% for section in sections %}
+            <div class="card shadow-lg mb-4">
+                <div class="row no-gutters {% if forloop.counter|divisibleby:2 %}flex-md-row-reverse{% endif %}">
+                    <div class="col-md-4">
+                        <img src="{% static section.image %}" class="card-img" alt="{{ section.title }}">
+                    </div>
+                    <div class="col-md-8">
+                        <div class="card-body">
+                            <h5 class="card-title"><i class="{{ section.icon }}"></i> {{ section.title }}</h5>
+                            <p class="card-text">{{ section.text }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
