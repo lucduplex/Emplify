@@ -105,16 +105,11 @@ def search_job_offers(request):
     else:
         job_offers = JobOffer.objects.all()
 
-    if not job_offers:
-        message = "Aucun emploi disponible à présent."
-    else:
-        message = None
-
     return render(request, 'search_job_offers.html', {
         'job_offers': job_offers,
-        'message': message,
         'query': query
     })
+    
 # @login_required
 # def postuler_offre(request, offre_id):
 #     """Permettre à un candidat de postuler à une offre d'emploi."""

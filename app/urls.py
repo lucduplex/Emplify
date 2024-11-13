@@ -11,9 +11,9 @@ urlpatterns = [
     path('connexion/', views.login_view, name='login'),
     path('deconnexion/', views.logout_view, name='logout'),
     path('about/', views.about_view, name='about'),
-    path('upload_resume/', views.upload_resume, name='upload_resume'),  # URL pour le téléchargement de CV et lettre de motivation
-    path('search_job_offers/', views.search_job_offers, name='search_job_offers'),  # URL pour la recherche d'offres d'emploi
-    path('job_detail/<int:offre_id>/', views.job_detail, name='job_detail'),  # URL pour les détails de l'offre
+    path('upload_resume/', views.upload_resume, name='upload_resume'), 
+    path('search_job_offers/', views.search_job_offers, name='search_job_offers'),  
+    path('job_detail/<int:offre_id>/', views.job_detail, name='job_detail'), 
     path('postuler_offre/<int:offre_id>/', views.postuler_offre, name='postuler_offre'),
     path('mes_candidatures/', views.mes_candidatures, name='mes_candidatures'),
 ]

@@ -10,12 +10,12 @@ body {
 }
 
 .navbar-brand {
-    color: #007bff !important;
+    color: #011932 !important;
     font-size: 1.5rem;
 }
 
 .nav-link {
-    color: #007bff !important;
+    color:  #011932 !important;
 }
 
 .btn {
@@ -28,7 +28,7 @@ body {
 }
 
 .card-header {
-    background-color: #007bff;
+    background-color: #25292d;
     color: white;
     text-align: center;
 }
