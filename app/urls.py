@@ -16,4 +16,6 @@ urlpatterns = [
     path('job_detail/<int:offre_id>/', views.job_detail, name='job_detail'), 
     path('postuler_offre/<int:offre_id>/', views.postuler_offre, name='postuler_offre'),
     path('mes_candidatures/', views.mes_candidatures, name='mes_candidatures'),
+    path('edit_job/<int:job_id>/', views.edit_job, name='edit_job'),  # Vue pour modifier l'offre
+    path('delete_job/<int:job_id>/', views.delete_job, name='delete_job'),  # Vue pour supprimer l'offre
 ]

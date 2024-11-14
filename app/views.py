@@ -207,3 +207,36 @@ def about_view(request):
         # Add more sections here...
     ]
     return render(request, 'about.html', {'sections': sections})
+
+@login_required
+def edit_job(request, job_id):
+    """Modifier une offre d'emploi"""
+    job = get_object_or_404(JobOffer, id=job_id)
+    
+    # Vérifiez si l'utilisateur est un recruteur et s'il est le propriétaire de l'offre
+    if request.user.role == 'RECRUTEUR' and job.recruteur.user == request.user:
+        if request.method == 'POST':
+            form = JobForm(request.POST, instance=job)
+            if form.is_valid():
+                form.save()
+                return redirect('job_list')  # Redirige vers la liste des offres
+        else:
+            form = JobForm(instance=job)
+        return render(request, 'edit_job.html', {'form': form, 'job': job})
+    else:
+        return redirect('job_list')  # Rediriger si ce n'est pas le recruteur
+
+
+@login_required
+def delete_job(request, job_id):
+    """Supprimer une offre d'emploi"""
+    job = get_object_or_404(JobOffer, id=job_id)
+    
+    # Vérifiez si l'utilisateur est un recruteur et s'il est le propriétaire de l'offre
+    if request.user.role == 'RECRUTEUR' and job.recruteur.user == request.user:
+        if request.method == 'POST':
+            job.delete()  # Supprime l'offre d'emploi
+            return redirect('job_list')  # Redirige vers la liste des offres
+        return render(request, 'confirm_delete.html', {'job': job})
+    else:
+        return redirect('job_list')  # Rediriger si ce n'est pas le recruteur
