@@ -1,0 +1,94 @@
+<!-- app/templates/chatbot.html -->
+
+{% extends "base.html" %}
+
+{% block title %}Chatbot - Conseils pour CV et Lettres{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <h2 class="text-center">Chatbot - Conseils pour CV et Lettres de Motivation</h2>
+    <div id="chatbot-box" class="chatbot-box mt-4">
+        <div id="chatbot-messages" class="chatbot-messages"></div>
+        <form id="chatbot-form" class="chatbot-form">
+            <input type="text" id="chatbot-input" placeholder="Posez votre question..." required>
+            <button type="submit" class="send-btn">Envoyer</button>
+        </form>
+    </div>
+</div>
+
+<style>
+    .chatbot-box {
+        width: 100%;
+        max-width: 600px;
+        margin: 0 auto;
+        border: 1px solid #ddd;
+        border-radius: 10px;
+        background-color: #f9f9f9;
+        padding: 20px;
+    }
+    .chatbot-messages {
+        height: 400px;
+        overflow-y: auto;
+        margin-bottom: 20px;
+        padding: 10px;
+        background-color: #ffffff;
+        border-radius: 5px;
+        border: 1px solid #ccc;
+    }
+    .chatbot-form {
+        display: flex;
+    }
+    #chatbot-input {
+        flex: 1;
+        padding: 10px;
+        border-radius: 5px;
+        border: 1px solid #ddd;
+        margin-right: 10px;
+    }
+    .send-btn {
+        background-color: #007bff;
+        color: white;
+        border: none;
+        padding: 10px 15px;
+        border-radius: 5px;
+    }
+</style>
+
+<script>
+    document.getElementById('chatbot-form').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const input = document.getElementById('chatbot-input');
+        const userMessage = input.value;
+        
+        // Afficher le message de l'utilisateur
+        const userDiv = document.createElement('div');
+        userDiv.classList.add('user-message');
+        userDiv.textContent = `Vous : ${userMessage}`;
+        document.getElementById('chatbot-messages').appendChild(userDiv);
+        
+        // Vider le champ de saisie
+        input.value = '';
+
+        // Appel à l'API du serveur pour obtenir la réponse du chatbot
+        const response = await fetch("{% url 'chatbot_response' %}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: new URLSearchParams({ 'message': userMessage })
+        });
+
+        const data = await response.json();
+
+        // Afficher la réponse du chatbot
+        const botDiv = document.createElement('div');
+        botDiv.classList.add('chatbot-message');
+        botDiv.textContent = `Chatbot : ${data.response || data.error}`;
+        document.getElementById('chatbot-messages').appendChild(botDiv);
+
+        // Faire défiler vers le bas
+        document.getElementById('chatbot-messages').scrollTop = document.getElementById('chatbot-messages').scrollHeight;
+    });
+</script>
+{% endblock %}

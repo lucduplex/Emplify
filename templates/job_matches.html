@@ -1,0 +1,16 @@
+<!-- app/templates/app/job_matches.html -->
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Résultats de la recherche d'offres d'emploi</h2>
+
+{% if matched_jobs %}
+    <ul>
+        {% for job in matched_jobs %}
+            <li><strong>{{ job.titre }}</strong> - {{ job.description }}</li>
+        {% endfor %}
+    </ul>
+{% else %}
+    <p>Aucune offre d'emploi ne correspond aux compétences de votre CV.</p>
+{% endif %}
+{% endblock %}

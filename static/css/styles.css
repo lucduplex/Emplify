@@ -47,3 +47,70 @@ body {
     background-color: #f8f9fa;
     color: #333;
 }
+#chatbot-container {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1000;
+}
+
+.chatbot-toggle {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 50%;
+    font-size: 20px;
+    cursor: pointer;
+}
+
+.chatbot-box {
+    display: none;
+    width: 300px;
+    height: 400px;
+    background-color: white;
+    border-radius: 10px;
+    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+}
+
+.chatbot-header {
+    background-color: #007bff;
+    color: white;
+    padding: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.close-chatbot {
+    background: none;
+    color: white;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+}
+
+.chatbot-messages {
+    padding: 10px;
+    height: 300px;
+    overflow-y: auto;
+    background-color: #f1f1f1;
+}
+
+.chatbot-form {
+    display: flex;
+    padding: 10px;
+}
+
+#chatbot-input {
+    flex: 1;
+    padding: 5px;
+}
+
+.send-btn {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+}

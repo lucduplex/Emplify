@@ -2,6 +2,12 @@ from pathlib import Path
 import os
 from dotenv import load_dotenv
 
+load_dotenv()
+
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+
+
+
 # Charger les variables d'environnement à partir du fichier .env
 load_dotenv()
 
@@ -72,7 +78,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'rcw_db',
         'USER': 'postgres',
-        'PASSWORD': os.getenv('PASSWORD_DB',''),
+        'PASSWORD': os.getenv('PASSWORD_DB','REMOVED'),
         'HOST': 'localhost',
         'PORT': '5432',
     } 

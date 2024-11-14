@@ -1,21 +1,226 @@
 # app/views.py
 from django.shortcuts import render, get_object_or_404, redirect
+from django.http import HttpResponse, HttpResponseNotAllowed
 from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.decorators import login_required
-from .forms import JobForm, RegistrationForm, LoginForm, CandidatForm, CandidatureForm
-from .models import Recruteur, JobOffer, Candidature ,Candidat
 from django.core.files.storage import default_storage
 from django.contrib import messages
+from django.conf import settings
+
+from django.http import JsonResponse
+
+
+
+# Models imports
+from .models import User, JobOffer, Candidat, Recruteur, Candidature
+
+# Forms imports
+from .forms import JobForm, RegistrationForm, LoginForm, CandidatForm, CandidatureForm
+
+# File processing imports
+import pdfplumber
+from docx import Document
 import os
+from io import BytesIO
+from reportlab.pdfgen import canvas
+
+# OpenAI import
+import openai
+
+# Custom utility functions
+from rcw.cv_processing import extract_competences
+
+
+def read_cv_file(cv_file):
+    file_type = cv_file.name.split('.')[-1].lower()
+    if file_type == 'pdf':
+        # Extraction de texte pour un fichier PDF
+        text = ""
+        with pdfplumber.open(cv_file) as pdf:
+            for page in pdf.pages:
+                text += page.extract_text() + "\n"
+        return text
+    elif file_type in ['doc', 'docx']:
+        # Extraction de texte pour un fichier Word
+        doc = Document(cv_file)
+        return "\n".join([paragraph.text for paragraph in doc.paragraphs])
+    else:
+        # Si c'est un fichier texte simple
+        return cv_file.read().decode('utf-8', errors='ignore')
+
+def match_jobs_view(request):
+    if request.method == "POST" and request.FILES.get("cv_file"):
+        cv_file = request.FILES["cv_file"]
+        try:
+            cv_text = read_cv_file(cv_file)
+            if not cv_text.strip():
+                return render(request, "cv_analysis_result.html", {"message": "Le fichier CV est vide ou non lisible."})
+
+            competences = extract_competences(cv_text)
+            if competences:
+                matching_jobs = JobOffer.objects.none()
+                for competence in competences:
+                    matching_jobs |= JobOffer.objects.filter(competences_requises__icontains=competence)
+                
+                if matching_jobs.exists():
+                    return render(request, "cv_analysis_result.html", {"jobs": matching_jobs})
+                else:
+                    return render(request, "cv_analysis_result.html", {"message": "Nous n'avons pas trouvé d'offres d'emploi similaires à votre CV."})
+            else:
+                return render(request, "cv_analysis_result.html", {"message": "Impossible d'extraire les compétences du CV."})
+        except Exception as e:
+            print("Erreur de lecture du fichier :", e)
+            return render(request, "cv_analysis_result.html", {"message": "Impossible de lire le fichier CV."})
+    return render(request, "index.html")
+
+
+
+#generer les lettre de motivation 
+
+
+# Configurez votre clé API OpenAI
+openai.api_key = settings.OPENAI_API_KEY
+
+def generate_cover_letter(request, offre_id):
+    """Générer une lettre de motivation pour une offre d'emploi en incluant les informations de l'utilisateur connecté."""
+    offre = get_object_or_404(JobOffer, id=offre_id)
+
+    # Vérifiez que l'utilisateur est un candidat
+    if not hasattr(request.user, 'candidat_profile'):
+        return HttpResponse("Seuls les candidats peuvent générer une lettre de motivation.", status=403)
+
+    # Récupérez les informations de l'utilisateur connecté (candidat)
+    candidat = request.user.candidat_profile
+    candidat_nom = f"{request.user.first_name} {request.user.last_name}"
+
+    if request.method == "GET":
+        # Construire le prompt en incluant les informations de l'utilisateur
+        prompt = f"Rédige une lettre de motivation pour une offre d'emploi intitulée '{offre.titre}'. " \
+                 f"La description du poste est : {offre.description}. " \
+                 f"Les compétences requises incluent : {offre.competences_requises}. " \
+                 f"Le salaire proposé est de {offre.salaire} $ et la localisation est {offre.localisation}. " \
+                 f"La lettre doit être professionnelle et formelle. " \
+                 f"Le candidat postulant est {candidat_nom}."
+
+        try:
+            response = openai.ChatCompletion.create(
+                model="gpt-4",
+                messages=[{"role": "user", "content": prompt}],
+                max_tokens=500
+            )
+            letter = response.choices[0].message['content']
+            return render(request, "cover_letter.html", {"offre": offre, "letter": letter, "user": request.user})
+        except Exception as e:
+            print("Erreur lors de la génération de la lettre :", e)
+            return HttpResponse("Une erreur s'est produite lors de la génération de la lettre de motivation.")
+    else:
+        return HttpResponseNotAllowed(['GET'])
+
+def download_cover_letter_pdf(request, offre_id):
+    """Télécharger la lettre de motivation générée en PDF pour une offre d'emploi."""
+    offre = get_object_or_404(JobOffer, id=offre_id)
+
+    # Vérifiez que l'utilisateur est un candidat
+    if not hasattr(request.user, 'candidat_profile'):
+        return HttpResponse("Seuls les candidats peuvent télécharger une lettre de motivation.", status=403)
+
+    # Récupérez les informations de l'utilisateur connecté
+    candidat = request.user.candidat_profile
+    candidat_nom = f"{request.user.first_name} {request.user.last_name}"
+
+    # Construire le prompt
+    prompt = f"Rédige une lettre de motivation pour une offre d'emploi intitulée '{offre.titre}'. " \
+             f"La description du poste est : {offre.description}. " \
+             f"Les compétences requises incluent : {offre.competences_requises}. " \
+             f"Le salaire proposé est de {offre.salaire} $ et la localisation est {offre.localisation}. " \
+             f"La lettre doit être professionnelle et formelle. " \
+             f"Le candidat postulant est {candidat_nom}."
+
+    # Appel à OpenAI
+    response = openai.ChatCompletion.create(
+        model="gpt-4",
+        messages=[{"role": "user", "content": prompt}],
+        max_tokens=500
+    )
+    letter = response.choices[0].message['content']
+
+    # Création du PDF
+    buffer = BytesIO()
+    p = canvas.Canvas(buffer)
+    p.drawString(100, 800, f"Lettre de motivation pour le poste: {offre.titre}")
+    text = p.beginText(100, 780)
+    text.setFont("Helvetica", 12)
+    text.setLeading(14)
+    for line in letter.splitlines():
+        text.textLine(line)
+    p.drawText(text)
+    p.showPage()
+    p.save()
+
+    buffer.seek(0)
+    return HttpResponse(buffer, content_type='application/pdf', headers={
+        'Content-Disposition': f'attachment; filename="Lettre_Motivation_{offre.titre}.pdf"',
+    })
+
+#chaTBOT
+
+def chatbot_page(request):
+    """Afficher la page de chatbot."""
+    return render(request, "chatbot.html")
+
+def chatbot_response(request):
+    """Obtenir la réponse du chatbot pour une question donnée."""
+    if request.method == 'POST':
+        user_message = request.POST.get('message')
+        
+        prompt = f"Conseils d'orientation professionnelle ou pour la rédaction de CV/lettres de motivation : '{user_message}'"
+
+        try:
+            response = openai.ChatCompletion.create(
+                model="gpt-4",
+                messages=[{"role": "user", "content": prompt}],
+                max_tokens=300
+            )
+            chatbot_response = response.choices[0].message['content']
+            return JsonResponse({"response": chatbot_response})
+        
+        except Exception as e:
+            return JsonResponse({"error": "Une erreur s'est produite avec le chatbot."})
+
+    return JsonResponse({"error": "Méthode non autorisée"}, status=405)
+
+
+
+
+
+
+from .scraper import scrape_indeed_jobs
+
+
+
 
 def index(request):
     jobs = JobOffer.objects.all()[:6] 
     return render(request, 'index.html', {'jobs': jobs})
 
+from django.shortcuts import render
+from .models import JobOffer
+from .scraper import scrape_indeed_jobs
+
 def job_list(request):
-    """Liste des offres d'emploi disponibles"""
+    # Récupérer les offres d'emploi locales
     jobs = JobOffer.objects.all()
+
+    # Exécuter le scraping pour récupérer les offres d'Indeed
+    scrape_indeed_jobs()
+
     return render(request, 'job_list.html', {'jobs': jobs})
+
+
+
+
+
+
 
 @login_required
 def post_job(request):
@@ -78,6 +283,11 @@ def logout_view(request):
     """Déconnexion utilisateur"""
     logout(request)
     return redirect('index')
+
+
+#
+
+
 
 @login_required
 def upload_resume(request):

@@ -16,4 +16,12 @@ urlpatterns = [
     path('job_detail/<int:offre_id>/', views.job_detail, name='job_detail'), 
     path('postuler_offre/<int:offre_id>/', views.postuler_offre, name='postuler_offre'),
     path('mes_candidatures/', views.mes_candidatures, name='mes_candidatures'),
+    path('', views.index, name='index'),
+    path('match_jobs/', views.match_jobs_view, name='match_jobs'),
+    path('offre/<int:offre_id>/generate_cover_letter/', views.generate_cover_letter, name='generate_cover_letter'),
+    path('offre/<int:offre_id>/download_cover_letter_pdf/', views.download_cover_letter_pdf, name='download_cover_letter_pdf'),
+      path('chatbot/', views.chatbot_page, name='chatbot_page'),
+    path('chatbot/response/', views.chatbot_response, name='chatbot_response'),
+
+
 ]

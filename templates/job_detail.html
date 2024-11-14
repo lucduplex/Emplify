@@ -8,18 +8,22 @@
     </div>
     <div class="card-body">
       <p><strong>Description :</strong> {{ offre.description }}</p>
-      <p>
-        <strong>Compétences requises :</strong> {{ offre.competences_requises }}
-      </p>
+      <p><strong>Compétences requises :</strong> {{ offre.competences_requises }}</p>
       <p><strong>Salaire :</strong> {{ offre.salaire }} $</p>
       <p><strong>Localisation :</strong> {{ offre.localisation }}</p>
       <p><strong>Date de publication :</strong> {{ offre.date_publication|date:"d/m/Y" }}</p>
-      
+
       {% if user.role == 'CANDIDAT' %}
       <form method="POST" action="{% url 'postuler_offre' offre.id %}" class="mt-4">
         {% csrf_token %}
         <button type="submit" class="btn btn-success btn-lg btn-block">
           <i class="fas fa-paper-plane"></i> Postuler à cette offre
+        </button>
+      </form>
+
+      <form method="GET" action="{% url 'generate_cover_letter' offre.id %}" class="mt-4">
+        <button type="submit" class="btn btn-warning btn-lg btn-block">
+          <i class="fas fa-file-alt"></i> Générer une lettre de motivation
         </button>
       </form>
       {% endif %}

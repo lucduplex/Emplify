@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+
+{% block title %}Lettre de Motivation{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+  <h2 class="text-center">Lettre de Motivation pour le poste : {{ offre.titre }}</h2>
+  <div class="letter-content bg-light p-4 mt-4 shadow-sm">
+    <p>{{ letter|linebreaks }}</p>
+  </div>
+  <a href="{% url 'download_cover_letter_pdf' offre.id %}" class="btn btn-primary mt-4">Télécharger en PDF</a>
+</div>
+{% endblock %}

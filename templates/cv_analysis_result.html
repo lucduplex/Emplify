@@ -4,7 +4,10 @@
 
 {% block content %}
 <div class="container my-5">
-  <h1 class="text-center mb-4"><i class="fas fa-briefcase"></i> Offres d'Emploi Disponibles</h1>
+  <h1 class="text-center mb-4"><i class="fas fa-briefcase"></i> Offres d'emploi qui vous correspondent le mieux </h1>
+
+  <!-- Message d'info -->
+  <p class="text-center text-info font-weight-bold">{{ message }}</p>
 
   <!-- Barre de recherche -->
   <form method="GET" action="{% url 'search_job_offers' %}" class="mb-4">
@@ -17,7 +20,7 @@
         aria-label="Rechercher des offres"
       />
       <div class="input-group-append">
-        <button type="submit" class="btn btn-primary"><i class="fas fa-search"></i> Recercher</button>
+        <button type="submit" class="btn btn-primary"><i class="fas fa-search"></i> Rechercher</button>
       </div>
     </div>
   </form>
@@ -38,6 +41,12 @@
           <a href="{% url 'job_detail' job.id %}" class="btn btn-outline-primary btn-sm mr-2">
             <i class="fas fa-info-circle"></i> Détails de l'emploi
           </a>
+
+          {% if user.role == 'RECRUTEUR' %}
+          <a href="{% url 'mes_candidatures' %}" class="btn btn-outline-secondary btn-sm">
+            <i class="fas fa-users"></i> Voir les candidats
+          </a>
+          {% endif %}
         </div>
       </li>
     {% empty %}
