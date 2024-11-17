@@ -7,6 +7,9 @@ from django.core.files.storage import default_storage
 from django.contrib import messages
 from django.conf import settings
 
+import pdfplumber
+from docx import Document
+
 from django.http import JsonResponse
 
 
@@ -172,22 +175,56 @@ def chatbot_response(request):
     """Obtenir la réponse du chatbot pour une question donnée."""
     if request.method == 'POST':
         user_message = request.POST.get('message')
-        
-        prompt = f"Conseils d'orientation professionnelle ou pour la rédaction de CV/lettres de motivation : '{user_message}'"
 
+        # Vérification que le message utilisateur est valide
+        if not user_message or not user_message.strip():
+            return JsonResponse({"error": "Le message ne peut pas être vide."}, status=400)
+
+        # Récupérer les offres d'emploi dans la base de données
+        try:
+            job_offers = JobOffer.objects.all()
+            if job_offers.exists():
+                offers_text = "\n".join([
+                    f"Titre: {job.titre}, Description: {job.description[:100]}..., Localisation: {job.localisation}, Salaire: {job.salaire} $"
+                    for job in job_offers
+                ])
+            else:
+                offers_text = "Aucune offre d'emploi n'est actuellement disponible dans notre base de données."
+        except Exception as e:
+            print(f"Erreur lors de la récupération des offres : {e}")
+            return JsonResponse({"error": "Impossible de récupérer les offres d'emploi."}, status=500)
+
+        # Construction du prompt pour le chatbot
+        prompt = (
+            f"Vous êtes un assistant virtuel pour un site de recherche d'emploi. Votre tâche principale est d'aider les utilisateurs avec :\n"
+            f"- Les compétences nécessaires pour des postes spécifiques.\n"
+            f"- Les conseils pour rédiger des CV professionnels.\n"
+            f"- Les offres d'emploi disponibles sur le site.\n\n"
+            f"Voici les offres d'emploi actuellement disponibles :\n"
+            f"{offers_text}\n\n"
+            f"L'utilisateur pose la question suivante : '{user_message}'. "
+            f"Répondez de manière claire, professionnelle et pertinente en utilisant les informations disponibles ci-dessus. "
+            f"Si la question ne concerne pas le site ou les offres d'emploi, indiquez poliment que vous ne pouvez pas répondre."
+        )
+
+        # Appel à l'API OpenAI pour obtenir une réponse
         try:
             response = openai.ChatCompletion.create(
                 model="gpt-4",
                 messages=[{"role": "user", "content": prompt}],
-                max_tokens=300
+                max_tokens=500
             )
             chatbot_response = response.choices[0].message['content']
             return JsonResponse({"response": chatbot_response})
-        
+
         except Exception as e:
-            return JsonResponse({"error": "Une erreur s'est produite avec le chatbot."})
+            # Log de l'erreur pour le développeur (optionnel)
+            print(f"Erreur OpenAI: {e}")
+            return JsonResponse({"error": "Une erreur s'est produite avec le chatbot."}, status=500)
 
     return JsonResponse({"error": "Méthode non autorisée"}, status=405)
+
+
 
 
 
@@ -200,8 +237,12 @@ from .scraper import scrape_indeed_jobs
 
 
 def index(request):
-    jobs = JobOffer.objects.all()[:6] 
+    """
+    Affiche les 6 offres d'emploi les plus récentes sur la page d'accueil.
+    """
+    jobs = JobOffer.objects.order_by('-date_publication')[:6]  # Trier par date de publication décroissante
     return render(request, 'index.html', {'jobs': jobs})
+
 
 from django.shortcuts import render
 from .models import JobOffer
@@ -245,21 +286,39 @@ def post_job(request):
 
 
 @login_required
+@login_required
 def profile(request):
-    """Profil utilisateur"""
-    return render(request, 'profile.html', {'user': request.user})
+    """Afficher le profil de l'utilisateur connecté, avec des offres spécifiques pour les recruteurs."""
+    user = request.user
+    context = {'user': user}
+
+    if user.role == 'RECRUTEUR':
+        try:
+            recruteur = Recruteur.objects.get(user=user)
+            offres = JobOffer.objects.filter(recruteur=recruteur)
+            context['offres'] = offres
+        except Recruteur.DoesNotExist:
+            context['offres'] = []  # Aucun recruteur trouvé ou pas d'offres publiées
+
+    return render(request, 'profile.html', context)
+
 
 def register(request):
-    """Inscription de nouveaux utilisateurs"""
+    """Inscription de nouveaux utilisateurs."""
     if request.method == 'POST':
         form = RegistrationForm(request.POST)
         if form.is_valid():
-            user = form.save()
-            login(request, user)  # Connecte l'utilisateur automatiquement après l'inscription
-            return redirect('index')
+            try:
+                user = form.save()
+                login(request, user)  # Connecte l'utilisateur automatiquement après l'inscription
+                return redirect('index')
+            except Exception as e:
+                form.add_error(None, f"Une erreur s'est produite : {str(e)}")
     else:
         form = RegistrationForm()
+
     return render(request, 'register.html', {'form': form})
+
 
 def login_view(request):
     """Connexion utilisateur"""
@@ -320,28 +379,7 @@ def search_job_offers(request):
         'query': query
     })
     
-# @login_required
-# def postuler_offre(request, offre_id):
-#     """Permettre à un candidat de postuler à une offre d'emploi."""
-#     offre = get_object_or_404(JobOffer, id=offre_id)
-
-#     if request.method == 'POST':
-#         candidature = Candidature(candidat=request.user.candidat_profile, offre=offre)
-#         candidature.save()
-#         return redirect('job_list')  # Rediriger vers la liste des offres après la candidature
-
-#     return render(request, 'postuler_offre.html', {'offre': offre})
-# @login_required
-# def postuler_offre(request, offre_id):
-#     """Permettre à un candidat de postuler à une offre d'emploi."""
-#     offre = get_object_or_404(JobOffer, id=offre_id)
-
-#     if request.method == 'POST':
-#         candidature = Candidature(candidat=request.user.candidat_profile, offre=offre)
-#         candidature.save()
-#         return redirect('job_list')  # Rediriger vers la liste des offres après la candidature
-
-#     return render(request, 'postuler_offre.html', {'offre': offre})
+    
 @login_required
 def postuler_offre(request, offre_id):
     """Permettre à un candidat de postuler à une offre d'emploi avec un CV et une lettre de motivation."""
@@ -417,3 +455,123 @@ def about_view(request):
         # Add more sections here...
     ]
     return render(request, 'about.html', {'sections': sections})
+
+
+@login_required
+def edit_job(request, job_id):
+    """Modifier une offre d'emploi"""
+    job = get_object_or_404(JobOffer, id=job_id)
+    
+    # Vérifiez si l'utilisateur est un recruteur et s'il est le propriétaire de l'offre
+    if request.user.role == 'RECRUTEUR' and job.recruteur.user == request.user:
+        if request.method == 'POST':
+            form = JobForm(request.POST, instance=job)
+            if form.is_valid():
+                form.save()
+                return redirect('job_list')  # Redirige vers la liste des offres
+        else:
+            form = JobForm(instance=job)
+        return render(request, 'edit_job.html', {'form': form, 'job': job})
+    else:
+        return redirect('job_list')  # Rediriger si ce n'est pas le recruteur
+@login_required
+def delete_job(request, job_id):
+    """Supprimer une offre d'emploi"""
+    job = get_object_or_404(JobOffer, id=job_id)
+    
+    # Vérifiez si l'utilisateur est un recruteur et s'il est le propriétaire de l'offre
+    if request.user.role == 'RECRUTEUR' and job.recruteur.user == request.user:
+        if request.method == 'POST':
+            job.delete()  # Supprime l'offre d'emploi
+            return redirect('job_list')  # Redirige vers la liste des offres
+        return render(request, 'confirm_delete.html', {'job': job})
+    else:
+        return redirect('job_list')  # Rediriger si ce n'est pas le recruteur
+    
+    
+    
+
+def calculer_pertinence_ia(offre, cv_texte, lettre_motivation_texte):
+    """
+    Utilise OpenAI GPT pour calculer la pertinence d'un candidat par rapport à une offre d'emploi.
+    """
+    prompt = f"""
+    Évaluez la pertinence d'un candidat pour une offre d'emploi.
+
+    Offre d'emploi :
+    Titre : {offre.titre}
+    Description : {offre.description}
+    Compétences requises : {offre.competences_requises}
+    Localisation : {offre.localisation}
+
+    CV du candidat :
+    {cv_texte}
+
+    Lettre de motivation :
+    {lettre_motivation_texte}
+
+    Donnez une note de 0 à 100 pour évaluer à quel point ce candidat correspond à l'offre d'emploi, en tenant compte de ses compétences, expériences, et motivations. Répondez uniquement par un chiffre.
+    """
+    try:
+        response = openai.ChatCompletion.create(
+            model="gpt-4",
+            messages=[{"role": "user", "content": prompt}],
+            max_tokens=20  # Limiter les tokens car seule une note est attendue
+        )
+        pertinence_score = response.choices[0].message['content'].strip()
+        return int(pertinence_score)
+    except Exception as e:
+        print(f"Erreur lors de l'évaluation avec OpenAI : {e}")
+        return 0
+
+def mes_candidatures(request):
+    """Afficher et classer les candidatures reçues pour les offres d'un recruteur."""
+    try:
+        recruteur = Recruteur.objects.get(user=request.user)
+    except Recruteur.DoesNotExist:
+        return render(request, 'error_page.html', {'message': "Vous n'êtes pas un recruteur."})
+
+    offres = JobOffer.objects.filter(recruteur=recruteur)
+    candidatures = Candidature.objects.filter(offre__in=offres)
+
+    # Utiliser l'IA pour calculer la pertinence
+    for candidature in candidatures:
+        try:
+            # Extraire le texte du CV et de la lettre de motivation
+            cv_texte = extract_text_from_cv(candidature.cv)  # Extraire texte du CV
+            lettre_motivation_texte = extract_text_from_cv(candidature.lettre_motivation)  # Extraire texte de la lettre
+            candidature.pertinence = calculer_pertinence_ia(candidature.offre, cv_texte, lettre_motivation_texte)
+        except Exception as e:
+            print(f"Erreur lors du traitement de la candidature {candidature.id}: {e}")
+            candidature.pertinence = 0
+
+    # Trier les candidatures par pertinence décroissante
+    candidatures = sorted(candidatures, key=lambda c: c.pertinence, reverse=True)
+
+    return render(request, 'mes_candidatures.html', {'candidatures': candidatures})
+
+def extract_text_from_cv(cv_file):
+    """
+    Extrait le texte d'un fichier CV (PDF ou Word).
+    """
+    file_extension = os.path.splitext(cv_file.name)[1].lower()  # Obtenez l'extension du fichier
+
+    try:
+        if file_extension == '.pdf':
+            # Extraction de texte pour un fichier PDF
+            text = ""
+            with pdfplumber.open(cv_file) as pdf:
+                for page in pdf.pages:
+                    if page.extract_text():
+                        text += page.extract_text() + "\n"
+            return text.strip()
+        elif file_extension in ['.doc', '.docx']:
+            # Extraction de texte pour un fichier Word
+            doc = Document(cv_file)
+            return "\n".join([paragraph.text for paragraph in doc.paragraphs]).strip()
+        else:
+            # Format non supporté
+            raise ValueError("Format de fichier non pris en charge. Veuillez utiliser un fichier PDF ou Word.")
+    except Exception as e:
+        print(f"Erreur lors de l'extraction de texte : {e}")
+        return ""

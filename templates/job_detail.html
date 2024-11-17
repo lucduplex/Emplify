@@ -12,8 +12,9 @@
       <p><strong>Salaire :</strong> {{ offre.salaire }} $</p>
       <p><strong>Localisation :</strong> {{ offre.localisation }}</p>
       <p><strong>Date de publication :</strong> {{ offre.date_publication|date:"d/m/Y" }}</p>
-
+      
       {% if user.role == 'CANDIDAT' %}
+      <!-- Formulaire pour postuler -->
       <form method="POST" action="{% url 'postuler_offre' offre.id %}" class="mt-4">
         {% csrf_token %}
         <button type="submit" class="btn btn-success btn-lg btn-block">
@@ -21,13 +22,20 @@
         </button>
       </form>
 
+      <!-- Bouton pour accéder au chatbot -->
+      <a href="{% url 'chatbot_page' %}" class="btn btn-info btn-lg btn-block mt-3">
+        <i class="fas fa-comments"></i> Demander des conseils au chatbot
+      </a>
+
+      <!-- Formulaire pour générer une lettre de motivation -->
       <form method="GET" action="{% url 'generate_cover_letter' offre.id %}" class="mt-4">
-        <button type="submit" class="btn btn-warning btn-lg btn-block">
+        <button type="submit" class="btn btn-outline-primary btn-lg btn-block">
           <i class="fas fa-file-alt"></i> Générer une lettre de motivation
         </button>
       </form>
       {% endif %}
 
+      <!-- Bouton pour revenir à la liste des offres -->
       <a href="{% url 'job_list' %}" class="btn btn-secondary mt-4 btn-block">
         <i class="fas fa-arrow-left"></i> Retour à la liste des offres
       </a>

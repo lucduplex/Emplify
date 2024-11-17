@@ -20,8 +20,10 @@ urlpatterns = [
     path('match_jobs/', views.match_jobs_view, name='match_jobs'),
     path('offre/<int:offre_id>/generate_cover_letter/', views.generate_cover_letter, name='generate_cover_letter'),
     path('offre/<int:offre_id>/download_cover_letter_pdf/', views.download_cover_letter_pdf, name='download_cover_letter_pdf'),
-      path('chatbot/', views.chatbot_page, name='chatbot_page'),
+    path('chatbot/', views.chatbot_page, name='chatbot_page'),
     path('chatbot/response/', views.chatbot_response, name='chatbot_response'),
+    path('edit_job/<int:job_id>/', views.edit_job, name='edit_job'),  
+    path('delete_job/<int:job_id>/', views.delete_job, name='delete_job'), 
 
 
 ]

@@ -1,94 +1,216 @@
-<!-- app/templates/chatbot.html -->
-
 {% extends "base.html" %}
 
 {% block title %}Chatbot - Conseils pour CV et Lettres{% endblock %}
 
 {% block content %}
+
 <div class="container my-5">
-    <h2 class="text-center">Chatbot - Conseils pour CV et Lettres de Motivation</h2>
-    <div id="chatbot-box" class="chatbot-box mt-4">
-        <div id="chatbot-messages" class="chatbot-messages"></div>
-        <form id="chatbot-form" class="chatbot-form">
-            <input type="text" id="chatbot-input" placeholder="Posez votre question..." required>
-            <button type="submit" class="send-btn">Envoyer</button>
-        </form>
+    <h2 class="text-center">Explorez nos offres d'emploi et recevez des conseils en temps réel !</h2>
+</div>
+<div id="chatbot-icon" class="chatbot-icon">
+    <i class="fas fa-comments"></i>
+</div>
+
+<div id="chatbot-container" class="chatbot-container hidden">
+    <div id="chatbot-header" class="chatbot-header">
+        <span>Chatbot - Conseils</span>
+        <button id="chatbot-close" class="close-btn">&times;</button>
     </div>
+    <div id="chatbot-messages" class="chatbot-messages">
+        <p class="chatbot-message bot-message">
+            Bonjour ! Posez votre question pour obtenir des conseils sur votre CV ou votre lettre de motivation.
+        </p>
+    </div>
+    <form id="chatbot-form" class="chatbot-form">
+        <input type="text" id="chatbot-input" placeholder="Posez votre question..." required>
+        <button type="submit" class="send-btn">Envoyer</button>
+    </form>
 </div>
 
 <style>
-    .chatbot-box {
-        width: 100%;
-        max-width: 600px;
-        margin: 0 auto;
-        border: 1px solid #ddd;
-        border-radius: 10px;
+    /* Icône flottante pour ouvrir le chatbot */
+    .chatbot-icon {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background-color: #007bff;
+        color: white;
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 24px;
+        cursor: pointer;
+        box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+        z-index: 1000;
+    }
+
+    .chatbot-icon:hover {
+        background-color: #0056b3;
+    }
+
+    /* Conteneur principal du chatbot */
+    .chatbot-container {
+        position: fixed;
+        top: 0;
+        right: 0;
+        width: 30%;
+        height: 100%;
         background-color: #f9f9f9;
-        padding: 20px;
+        border-left: 1px solid #ccc;
+        box-shadow: -4px 0px 6px rgba(0, 0, 0, 0.1);
+        display: flex;
+        flex-direction: column;
+        z-index: 1000;
     }
+
+    .hidden {
+        display: none;
+    }
+
+    /* En-tête du chatbot */
+    .chatbot-header {
+        background-color: #007bff;
+        color: white;
+        padding: 15px;
+        font-size: 16px;
+        font-weight: bold;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .close-btn {
+        background: none;
+        border: none;
+        color: white;
+        font-size: 20px;
+        cursor: pointer;
+    }
+
+    /* Zone des messages */
     .chatbot-messages {
-        height: 400px;
-        overflow-y: auto;
-        margin-bottom: 20px;
+        flex: 1;
         padding: 10px;
-        background-color: #ffffff;
-        border-radius: 5px;
-        border: 1px solid #ccc;
+        overflow-y: auto;
+        background-color: white;
+        border-top: 1px solid #ccc;
+        border-bottom: 1px solid #ccc;
     }
+
+    .chatbot-message {
+        padding: 10px;
+        margin: 5px 0;
+        border-radius: 5px;
+        width: fit-content;
+        max-width: 80%;
+    }
+
+    /* Style pour les messages utilisateur */
+    .user-message {
+        background-color: #d1ecf1;
+        color: #0c5460;
+        align-self: flex-end;
+        text-align: right;
+    }
+
+    /* Style pour les messages du bot */
+    .bot-message {
+        background-color: #f8d7da;
+        color: #721c24;
+        align-self: flex-start;
+        text-align: left;
+    }
+
+    /* Formulaire d'entrée */
     .chatbot-form {
         display: flex;
+        padding: 10px;
+        background-color: #f9f9f9;
+        border-top: 1px solid #ccc;
     }
+
     #chatbot-input {
         flex: 1;
         padding: 10px;
         border-radius: 5px;
-        border: 1px solid #ddd;
+        border: 1px solid #ccc;
         margin-right: 10px;
     }
+
     .send-btn {
         background-color: #007bff;
         color: white;
         border: none;
         padding: 10px 15px;
         border-radius: 5px;
+        cursor: pointer;
+    }
+
+    .send-btn:hover {
+        background-color: #0056b3;
     }
 </style>
-
 <script>
-    document.getElementById('chatbot-form').addEventListener('submit', async function(e) {
-        e.preventDefault();
-        const input = document.getElementById('chatbot-input');
-        const userMessage = input.value;
-        
-        // Afficher le message de l'utilisateur
-        const userDiv = document.createElement('div');
-        userDiv.classList.add('user-message');
-        userDiv.textContent = `Vous : ${userMessage}`;
-        document.getElementById('chatbot-messages').appendChild(userDiv);
-        
-        // Vider le champ de saisie
-        input.value = '';
+    document.addEventListener('DOMContentLoaded', function () {
+        const chatbotIcon = document.getElementById('chatbot-icon');
+        const chatbotContainer = document.getElementById('chatbot-container');
+        const chatbotClose = document.getElementById('chatbot-close');
+        const chatbotMessages = document.getElementById('chatbot-messages');
+        const chatbotForm = document.getElementById('chatbot-form');
+        const chatbotInput = document.getElementById('chatbot-input');
 
-        // Appel à l'API du serveur pour obtenir la réponse du chatbot
-        const response = await fetch("{% url 'chatbot_response' %}", {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-                'X-CSRFToken': '{{ csrf_token }}'
-            },
-            body: new URLSearchParams({ 'message': userMessage })
+        // Afficher/masquer le chatbot
+        chatbotIcon.addEventListener('click', function () {
+            chatbotContainer.classList.toggle('hidden');
         });
 
-        const data = await response.json();
+        // Fermer le chatbot
+        chatbotClose.addEventListener('click', function () {
+            chatbotContainer.classList.add('hidden');
+        });
 
-        // Afficher la réponse du chatbot
-        const botDiv = document.createElement('div');
-        botDiv.classList.add('chatbot-message');
-        botDiv.textContent = `Chatbot : ${data.response || data.error}`;
-        document.getElementById('chatbot-messages').appendChild(botDiv);
+        // Envoi des messages
+        chatbotForm.addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const userMessage = chatbotInput.value;
 
-        // Faire défiler vers le bas
-        document.getElementById('chatbot-messages').scrollTop = document.getElementById('chatbot-messages').scrollHeight;
+            // Afficher le message utilisateur
+            const userDiv = document.createElement('div');
+            userDiv.classList.add('chatbot-message', 'user-message');
+            userDiv.textContent = `Vous : ${userMessage}`;
+            chatbotMessages.appendChild(userDiv);
+            chatbotInput.value = '';
+
+            try {
+                const response = await fetch("{% url 'chatbot_response' %}", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: new URLSearchParams({ 'message': userMessage })
+                });
+                const data = await response.json();
+
+                // Afficher la réponse du bot
+                const botDiv = document.createElement('div');
+                botDiv.classList.add('chatbot-message', 'bot-message');
+                botDiv.textContent = `Chatbot : ${data.response || data.error}`;
+                chatbotMessages.appendChild(botDiv);
+            } catch (error) {
+                const errorDiv = document.createElement('div');
+                errorDiv.classList.add('chatbot-message', 'bot-message');
+                errorDiv.textContent = "Erreur lors de la communication avec le serveur.";
+                chatbotMessages.appendChild(errorDiv);
+            }
+
+            // Faire défiler vers le bas
+            chatbotMessages.scrollTop = chatbotMessages.scrollHeight;
+        });
     });
 </script>
+
 {% endblock %}

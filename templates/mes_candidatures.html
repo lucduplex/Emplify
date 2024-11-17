@@ -15,6 +15,7 @@
               <th><i class="fas fa-user"></i> Candidat</th>
               <th><i class="fas fa-briefcase"></i> Offre d'emploi</th>
               <th><i class="fas fa-calendar-alt"></i> Date de postulation</th>
+              <th><i class="fas fa-percentage"></i> Pertinence</th>
               <th><i class="fas fa-file-download"></i> CV</th>
               <th><i class="fas fa-file-alt"></i> Lettre de motivation</th>
             </tr>
@@ -25,6 +26,7 @@
               <td>{{ candidature.candidat.username }}</td>
               <td>{{ candidature.offre.titre }}</td>
               <td>{{ candidature.date_postulation|date:"d M Y" }}</td>
+              <td>{{ candidature.pertinence }}%</td>
               <td>
                 <a href="{{ candidature.cv.url }}" target="_blank" class="btn btn-outline-primary btn-sm">
                   Télécharger CV
