@@ -78,7 +78,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'rcw_db',
         'USER': 'postgres',
-        'PASSWORD': os.getenv('PASSWORD_DB',''),
+        'PASSWORD': os.getenv('PASSWORD_DB',),
         'HOST': 'localhost',
         'PORT': '5432',
     } 
