@@ -24,6 +24,8 @@ urlpatterns = [
     path('chatbot/response/', views.chatbot_response, name='chatbot_response'),
     path('edit_job/<int:job_id>/', views.edit_job, name='edit_job'),  
     path('delete_job/<int:job_id>/', views.delete_job, name='delete_job'), 
+    path('offres/<int:offre_id>/candidatures/', views.candidatures_par_offre, name='candidatures_par_offre'),
+
 
 
 ]

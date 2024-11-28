@@ -40,17 +40,7 @@
             <i class="fas fa-info-circle"></i> Détails de l'emploi
           </a>
 
-          {% if user.role == 'RECRUTEUR' %}
-          <a href="{% url 'mes_candidatures' %}" class="btn btn-outline-secondary btn-sm mr-2">
-            <i class="fas fa-users"></i> Voir les candidats
-          </a>
-          <a href="{% url 'edit_job' job.id %}" class="btn btn-warning btn-sm mr-2">
-            <i class="fas fa-edit"></i> Modifier
-          </a>
-          <a href="{% url 'delete_job' job.id %}" class="btn btn-danger btn-sm" onclick="return confirm('Êtes-vous sûr de vouloir supprimer cette offre ?');">
-            <i class="fas fa-trash-alt"></i> Supprimer
-          </a>
-          {% endif %}
+          
         </div>
       </li>
     {% empty %}
