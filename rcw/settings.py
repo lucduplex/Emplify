@@ -6,11 +6,6 @@ load_dotenv()
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
-
-
-# Charger les variables d'environnement à partir du fichier .env
-load_dotenv()
-
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -19,7 +14,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-t#jm8$e^p96bfqvxyoeu^4*ty$!2i7x-(y*lxw#4iw$f0$^-+5'
+SECRET_KEY = os.getenv("SECRET_KEY")
+
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -78,7 +74,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'rcw_db',
         'USER': 'postgres',
-        'PASSWORD': os.getenv('PASSWORD_DB','REMOVED'),
+        'PASSWORD': os.getenv('DB_PASSWORD',''),
         'HOST': 'localhost',
         'PORT': '5432',
     } 

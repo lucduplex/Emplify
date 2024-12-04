@@ -6,13 +6,14 @@ class User(AbstractUser):
     ROLE_CHOICES = [('CANDIDAT', 'Candidat'), ('RECRUTEUR', 'Recruteur')]
     STATUS_CHOICES = [('ACTIF', 'Actif'), ('EXPIRE', 'Expiré')]
     PLAN_CHOICES = [('BASIC', 'Basic'), ('PRO', 'Pro'), ('ENTERPRISE', 'Enterprise')]
-
+    
     role = models.CharField(max_length=10, choices=ROLE_CHOICES)
     statut = models.CharField(max_length=7, choices=STATUS_CHOICES, default='ACTIF')
-    plan_abonnement = models.CharField(max_length=10, choices=PLAN_CHOICES, null=True, blank=True)
+    plan_abonnement = models.CharField(max_length=10, choices=PLAN_CHOICES, default='BASIC')
 
     def __str__(self):
         return self.username
+
 
 class Recruteur(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='recruteur_profile')
@@ -43,6 +44,7 @@ class JobOffer(models.Model):
 
     def __str__(self):
         return self.titre
+    
 class Candidature(models.Model):
     candidat = models.ForeignKey(User, on_delete=models.CASCADE, related_name='candidatures')
     offre = models.ForeignKey(JobOffer, on_delete=models.CASCADE, related_name='candidatures')

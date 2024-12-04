@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block title %}Candidatures pour {{ offre.titre }}{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <h1 class="text-center mb-4">Candidatures pour "{{ offre.titre }}"</h1>
+    {% if candidatures %}
+        <div class="table-responsive">
+            <table class="table table-hover table-bordered text-center shadow-sm">
+                <thead class="thead-dark">
+                    <tr>
+                        <th><i class="fas fa-user"></i> Candidat</th>
+                        <th><i class="fas fa-calendar-alt"></i> Date de Postulation</th>
+                        <th><i class="fas fa-percentage"></i> Pertinence</th>
+                        <th><i class="fas fa-file-download"></i> CV</th>
+                        <th><i class="fas fa-file-alt"></i> Lettre de Motivation</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for candidature in candidatures %}
+                        <tr>
+                            <td>{{ candidature.candidat.username }}</td>
+                            <td>{{ candidature.date_postulation|date:"d M Y" }}</td>
+                            <td>{{ candidature.pertinence }}%</td>
+                            <td>
+                                <a href="{{ candidature.cv.url }}" target="_blank" class="btn btn-outline-primary btn-sm">
+                                    Télécharger CV
+                                </a>
+                            </td>
+                            <td>
+                                <a href="{{ candidature.lettre_motivation.url }}" target="_blank" class="btn btn-outline-secondary btn-sm">
+                                    Télécharger Lettre
+                                </a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <p class="alert alert-info text-center">Aucune candidature reçue pour cette offre.</p>
+    {% endif %}
+</div>
+{% endblock %}
