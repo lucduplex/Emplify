@@ -17,6 +17,7 @@ urlpatterns = [
     path('postuler_offre/<int:offre_id>/', views.postuler_offre, name='postuler_offre'),
     path('mes_candidatures/', views.mes_candidatures, name='mes_candidatures'),
     path('', views.index, name='index'),
+    path('complete-profile/', views.complete_profile, name='complete_profile'),
     path('match_jobs/', views.match_jobs_view, name='match_jobs'),
     path('offre/<int:offre_id>/generate_cover_letter/', views.generate_cover_letter, name='generate_cover_letter'),
     path('offre/<int:offre_id>/download_cover_letter_pdf/', views.download_cover_letter_pdf, name='download_cover_letter_pdf'),

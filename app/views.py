@@ -19,7 +19,7 @@ from reportlab.pdfgen import canvas
 
 # Importations des modèles et formulaires
 from .models import User, JobOffer, Candidat, Recruteur, Candidature
-from .forms import JobForm, RegistrationForm, LoginForm, CandidatForm, CandidatureForm
+from .forms import JobForm, RegistrationForm, LoginForm, CandidatForm, CandidatureForm, RecruteurForm
 
 # Importations des utilitaires personnalisés
 from rcw.cv_processing import extract_competences
@@ -92,33 +92,63 @@ def index(request):
 
 @login_required
 def profile(request):
-    """Affiche le profil de l'utilisateur connecté."""
+    """Affiche le profil de l'utilisateur connecté avec ses informations détaillées."""
     user = request.user
     context = {'user': user}
 
+    # Récupération des informations pour un recruteur
     if user.role == 'RECRUTEUR':
         try:
-            recruteur = Recruteur.objects.get(user=user)
+            recruteur = Recruteur.objects.select_related('user').get(user=user)
             offres = JobOffer.objects.filter(recruteur=recruteur)
-            context['offres'] = offres
+            context.update({
+                'recruteur': recruteur,
+                'offres': offres,
+            })
         except Recruteur.DoesNotExist:
-            context['offres'] = []
+            context.update({
+                'recruteur': None,
+                'offres': [],
+            })
+
+    # Récupération des informations pour un candidat
+    elif user.role == 'CANDIDAT':
+        try:
+            candidat = Candidat.objects.select_related('user').get(user=user)
+            context.update({
+                'candidat': candidat,
+            })
+        except Candidat.DoesNotExist:
+            context.update({
+                'candidat': None,
+            })
 
     return render(request, 'profile.html', context)
 
 def register(request):
-    """Permet l'inscription d'un nouvel utilisateur."""
     if request.method == 'POST':
         form = RegistrationForm(request.POST)
         if form.is_valid():
             try:
-                user = form.save()
+                # Crée un utilisateur sans le connecter immédiatement
+                user = form.save(commit=False)
+                user.plan_abonnement = 'BASIC'
+                user.save()
+
+                # Connecte l'utilisateur immédiatement après l'inscription
                 login(request, user)
+
+                # Redirige vers la page de complétion de profil en fonction du rôle
+                if user.role == 'RECRUTEUR' or user.role == 'CANDIDAT':
+                    return redirect('complete_profile')
+
+                # Sinon, redirige vers la page d'accueil
                 return redirect('index')
             except Exception as e:
                 form.add_error(None, f"Erreur : {str(e)}")
     else:
         form = RegistrationForm()
+
     return render(request, 'register.html', {'form': form})
 
 def login_view(request):
@@ -151,28 +181,44 @@ def logout_view(request):
 
 @login_required
 def post_job(request):
-    """Permet à un recruteur de publier une offre d'emploi."""
-    if request.user.role == 'RECRUTEUR':
-        if not hasattr(request.user, 'recruteur_profile'):
-            Recruteur.objects.create(user=request.user)
+    """Permet à un recruteur de publier une offre d'emploi après vérification de son profil."""
+    if request.user.role != 'RECRUTEUR':
+        return redirect('job_list')  # Redirige les utilisateurs non-recruteurs
 
-        if request.method == 'POST':
-            form = JobForm(request.POST)
-            if form.is_valid():
-                job = form.save(commit=False)
-                job.recruteur = request.user.recruteur_profile
-                job.save()
-                return redirect('job_list')
-        else:
-            form = JobForm()
-        return render(request, 'post_job.html', {'form': form})
-    return redirect('job_list')
+    # Récupérer ou créer un profil recruteur
+    recruteur, _ = Recruteur.objects.get_or_create(user=request.user)
+
+    # Logique pour publier une offre d'emploi
+    if request.method == 'POST':
+        form = JobForm(request.POST)
+        if form.is_valid():
+            job = form.save(commit=False)
+            job.recruteur = recruteur
+            job.save()
+            return redirect('job_list')
+    else:
+        form = JobForm()
+
+    return render(request, 'post_job.html', {'form': form})
+
+
+
+from django.db.models import Q
 
 @login_required
 def job_list(request):
-    """Affiche la liste des offres d'emploi."""
-    jobs = JobOffer.objects.all()
-    return render(request, 'job_list.html', {'jobs': jobs})
+    """Affiche la liste des offres d'emploi avec fonctionnalité de recherche."""
+    query = request.GET.get('q', '')
+    if query:
+        jobs = JobOffer.objects.filter(
+            Q(titre__icontains=query) |
+            Q(description__icontains=query) |
+            Q(competences_requises__icontains=query) |
+            Q(localisation__icontains=query)
+        )
+    else:
+        jobs = JobOffer.objects.all()
+    return render(request, 'job_list.html', {'jobs': jobs, 'query': query})
 
 
 # ---- Génération et Téléchargement ----
@@ -487,8 +533,6 @@ def edit_job(request, job_id):
     return redirect('job_list')
 
 
-#supprimer une offre 
-
 @login_required
 def delete_job(request, job_id):
     """Supprime une offre d'emploi."""
@@ -502,5 +546,29 @@ def delete_job(request, job_id):
 
     return render(request, 'confirm_delete.html', {'job': job})
 
+@login_required
+def complete_profile(request):
+    """Permet à un utilisateur de compléter son profil."""
+    form = None
 
+    # Vérifier le rôle de l'utilisateur pour décider du formulaire
+    if request.user.role == 'RECRUTEUR':
+        form = RecruteurForm(request.POST or None)
+    elif request.user.role == 'CANDIDAT':
+        form = CandidatForm(request.POST or None, request.FILES or None)
+    else:
+        return redirect('index')  # Rediriger si le rôle est indéfini
 
+    if request.method == 'POST' and form.is_valid():
+        # Création uniquement après soumission valide
+        if request.user.role == 'RECRUTEUR':
+            recruteur = form.save(commit=False)
+            recruteur.user = request.user  # Associer l'utilisateur au recruteur
+            recruteur.save()
+        elif request.user.role == 'CANDIDAT':
+            candidat = form.save(commit=False)
+            candidat.user = request.user  # Associer l'utilisateur au candidat
+            candidat.save()
+        return redirect('login')  # Redirection après sauvegarde
+
+    return render(request, 'complete_profile.html', {'form': form})

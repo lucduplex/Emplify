@@ -11,14 +11,41 @@
                     <h2 class="mb-0">Inscription</h2>
                 </div>
                 <div class="card-body">
-                    <form method="post">
+                    <form method="post" novalidate>
                         {% csrf_token %}
-                        {{ form.as_p }}
-                        <button type="submit" class="btn btn-success btn-block mt-4">S'inscrire</button>
+                        
+                        <!-- Affichage des erreurs générales du formulaire -->
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger">
+                                <ul>
+                                    {% for error in form.non_field_errors %}
+                                        <li>{{ error }}</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        {% endif %}
+                        
+                        <!-- Rendu des champs du formulaire -->
+                        {% for field in form %}
+                            <div class="form-group">
+                                {{ field.label_tag }}
+                                {{ field }}
+                                {% if field.errors %}
+                                    <small class="text-danger">{{ field.errors|striptags }}</small>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                        
+                        <!-- Bouton d'inscription -->
+                        <button type="submit" class="btn btn-success btn-block mt-4">
+                            <i class="fas fa-user-plus"></i> S'inscrire
+                        </button>
                     </form>
                 </div>
                 <div class="card-footer text-center">
-                    <small>Vous avez déjà un compte ? <a href="{% url 'login' %}">Connectez-vous ici</a>.</small>
+                    <small>Vous avez déjà un compte ? 
+                        <a href="{% url 'login' %}" class="text-primary">Connectez-vous ici</a>.
+                    </small>
                 </div>
             </div>
         </div>

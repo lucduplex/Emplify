@@ -17,62 +17,89 @@
             {% if user.role == 'CANDIDAT' %}
                 <hr>
                 <h5>Informations Candidat</h5>
-                <p><strong>Compétences :</strong> {{ user.candidat_profile.competences }}</p>
+                {% if candidat %}
+                    <p><strong>Compétences :</strong> {{ candidat.competences|default:"Non spécifiées" }}</p>
+                    <p>
+                        <strong>CV :</strong> 
+                        {% if candidat.cv %}
+                            <a href="{{ candidat.cv.url }}" target="_blank">Télécharger le CV</a>
+                        {% else %}
+                            Non disponible
+                        {% endif %}
+                    </p>
+                    <p>
+                        <strong>Lettre de motivation :</strong> 
+                        {% if candidat.lettres_motivation %}
+                            <a href="{{ candidat.lettres_motivation.url }}" target="_blank">Télécharger la lettre</a>
+                        {% else %}
+                            Non disponible
+                        {% endif %}
+                    </p>
+                {% else %}
+                    <p>Aucune information de candidat disponible.</p>
+                {% endif %}
+
             {% elif user.role == 'RECRUTEUR' %}
                 <hr>
                 <h5>Informations Recruteur</h5>
-                <p><strong>Entreprise :</strong> {{ user.recruteur_profile.entreprise }}</p>
-                <p><strong>Secteur d'Activité :</strong> {{ user.recruteur_profile.secteur_activite }}</p>
-                
-                <hr>
-                <h5>Offres d'Emploi Publiées</h5>
-                {% if user.recruteur_profile.offres.exists %}
-                    <div class="table-responsive">
-                        <table class="table table-hover table-bordered text-center shadow-sm">
-                            <thead class="thead-dark">
-                                <tr>
-                                    <th><i class="fas fa-briefcase"></i> Titre de l'Offre</th>
-                                    <th><i class="fas fa-calendar-alt"></i> Date de Publication</th>
-                                    <th><i class="fas fa-cogs"></i> Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for offre in user.recruteur_profile.offres.all %}
-                                <tr>
-                                    <td>{{ offre.titre }}</td>
-                                    <td>{{ offre.date_publication|date:"d M Y" }}</td>
-                                    <td>
-                                        <a href="{% url 'job_detail' offre.id %}" class="btn btn-primary btn-sm">
-                                            <i class="fas fa-eye"></i> Voir
-                                        </a>
-                                        <a href="{% url 'edit_job' offre.id %}" class="btn btn-warning btn-sm">
-                                            <i class="fas fa-edit"></i> Modifier
-                                        </a>
-                                        <form action="{% url 'delete_job' offre.id %}" method="POST" style="display:inline;">
-                                            {% csrf_token %}
-                                            <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Êtes-vous sûr de vouloir supprimer cette offre ?');">
-                                                <i class="fas fa-trash"></i> Supprimer
-                                            </button>
-                                        </form>
-                                        <a href="{% url 'candidatures_par_offre' offre.id %}" class="btn btn-info btn-sm">
-                                            <i class="fas fa-users"></i> Voir les candidats
-                                        </a>
-                                    </td>
-                                    
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                {% else %}
-                    <p>Aucune offre d'emploi publiée pour le moment.</p>
-                {% endif %}
+                {% if recruteur %}
+                    <p><strong>Entreprise :</strong> {{ recruteur.entreprise }}</p>
+                    <p><strong>Secteur d'Activité :</strong> {{ recruteur.secteur_activite }}</p>
+                    <p><strong>Adresse :</strong> {{ recruteur.adresse }}</p>
 
-                <hr>
-                <h5>Candidatures Reçues</h5>
-                <a href="{% url 'mes_candidatures' %}" class="btn btn-info btn-lg">
-                    <i class="fas fa-users"></i> Voir les Candidatures
-                </a>
+                    <hr>
+                    <h5>Offres d'Emploi Publiées</h5>
+                    {% if offres %}
+                        <div class="table-responsive">
+                            <table class="table table-hover table-bordered text-center shadow-sm">
+                                <thead class="thead-dark">
+                                    <tr>
+                                        <th><i class="fas fa-briefcase"></i> Titre de l'Offre</th>
+                                        <th><i class="fas fa-calendar-alt"></i> Date de Publication</th>
+                                        <th><i class="fas fa-cogs"></i> Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for offre in offres %}
+                                    <tr>
+                                        <td>{{ offre.titre }}</td>
+                                        <td>{{ offre.date_publication|date:"d M Y" }}</td>
+                                        <td>
+                                            <a href="{% url 'job_detail' offre.id %}" class="btn btn-primary btn-sm">
+                                                <i class="fas fa-eye"></i> Voir
+                                            </a>
+                                            <a href="{% url 'edit_job' offre.id %}" class="btn btn-warning btn-sm">
+                                                <i class="fas fa-edit"></i> Modifier
+                                            </a>
+                                            <form action="{% url 'delete_job' offre.id %}" method="POST" style="display:inline;">
+                                                {% csrf_token %}
+                                                <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Êtes-vous sûr de vouloir supprimer cette offre ?');">
+                                                    <i class="fas fa-trash"></i> Supprimer
+                                                </button>
+                                            </form>
+                                            <a href="{% url 'candidatures_par_offre' offre.id %}" class="btn btn-info btn-sm">
+                                                <i class="fas fa-users"></i> Voir les candidats
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p>Aucune offre d'emploi publiée pour le moment.</p>
+                    {% endif %}
+
+                    <hr>
+                    <h5>Candidatures Reçues</h5>
+                    <a href="{% url 'mes_candidatures' %}" class="btn btn-info btn-lg">
+                        <i class="fas fa-users"></i> Voir les Candidatures
+                    </a>
+                {% else %}
+                    <p>Aucune information de recruteur disponible.</p>
+                {% endif %}
+            {% else %}
+                <p>Rôle utilisateur non reconnu.</p>
             {% endif %}
         </div>
     </div>

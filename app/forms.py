@@ -1,7 +1,7 @@
 # app/forms.py
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
-from .models import User, JobOffer , Candidat, Candidature
+from .models import User, JobOffer , Candidat, Candidature, Recruteur
 from django.core.exceptions import ValidationError
 
 
@@ -9,7 +9,7 @@ class RegistrationForm(UserCreationForm):
     """Formulaire d'inscription utilisateur"""
     class Meta:
         model = User
-        fields = ['username', 'email', 'password1', 'password2', 'role', 'plan_abonnement']
+        fields = ['username', 'email', 'password1', 'password2', 'role']
 
 class LoginForm(forms.Form):
     """Formulaire de connexion"""
@@ -20,7 +20,8 @@ class JobForm(forms.ModelForm):
     """Formulaire de publication d'offre d'emploi"""
     class Meta:
         model = JobOffer
-        fields = ['titre', 'description', 'competences_requises', 'salaire', 'localisation']
+        fields = ['titre', 'description','competences_requises', 'salaire', 'localisation']
+        
 class CandidatForm(forms.ModelForm):
     """Formulaire de candidature, ajoutez une validation pour les formats de fichiers """
     class Meta:
@@ -47,3 +48,11 @@ class CandidatureForm(forms.ModelForm):
     class Meta:
         model = Candidature
         fields = []    
+
+
+class RecruteurForm(forms.ModelForm):
+    class Meta:
+        model = Recruteur
+        fields = ['entreprise', 'secteur_activite', 'adresse']
+
+    
