@@ -23,6 +23,7 @@ from .forms import JobForm, RegistrationForm, LoginForm, CandidatForm, Candidatu
 
 # Importations des utilitaires personnalisés
 from rcw.cv_processing import extract_competences
+from django.db.models import Q
 from .scraper import scrape_indeed_jobs
 
 # Configuration OpenAI
@@ -200,10 +201,6 @@ def post_job(request):
         form = JobForm()
 
     return render(request, 'post_job.html', {'form': form})
-
-
-
-from django.db.models import Q
 
 @login_required
 def job_list(request):
@@ -413,11 +410,12 @@ def chatbot_response(request):
 
 
 # ---- Détails et Pages Statique ----
-
 def job_detail(request, offre_id):
-    """Affiche les détails d'une offre d'emploi."""
+    """Affiche les détails d'une offre d'emploi, y compris les informations du recruteur."""
     offre = get_object_or_404(JobOffer, id=offre_id)
-    return render(request, 'job_detail.html', {'offre': offre})
+    recruteur = offre.recruteur 
+    return render(request, 'job_detail.html', {'offre': offre, 'recruteur': recruteur})
+
 
 def about_view(request):
     """Affiche la page À propos."""
