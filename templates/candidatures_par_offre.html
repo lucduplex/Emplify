@@ -22,7 +22,13 @@
                         <tr>
                             <td>{{ candidature.candidat.username }}</td>
                             <td>{{ candidature.date_postulation|date:"d M Y" }}</td>
-                            <td>{{ candidature.pertinence }}%</td>
+                            <td>
+                                {% if user.plan_abonnement == 'ENTERPRISE' %}
+                                    {{ candidature.pertinence }}%
+                                {% else %}
+                                    NAN
+                                {% endif %}
+                            </td>
                             <td>
                                 <a href="{{ candidature.cv.url }}" target="_blank" class="btn btn-outline-primary btn-sm">
                                     Télécharger CV

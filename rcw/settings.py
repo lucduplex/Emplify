@@ -6,6 +6,16 @@ load_dotenv()
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
+# Plans et leurs prix
+PLANS_PRICING = {
+    'PRO': 10,  # Prix en USD
+    'ENTERPRISE': 20,  # Prix en USD
+}
+
+STRIPE_PUBLIC_KEY = os.getenv('STRIPE_PUBLIC_KEY', '')
+STRIPE_SECRET_KEY = ''
+
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 

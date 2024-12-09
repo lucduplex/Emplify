@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block title %}
+Mettez à niveau votre abonnement
+{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <h2 class="text-center mb-4">Mettez à niveau votre abonnement</h2>
+    <p class="text-center">Choisissez un plan d'abonnement adapté à vos besoins et découvrez les fonctionnalités incluses.</p>
+    <form method="POST">
+        {% csrf_token %}
+        <div class="row">
+            {% for plan, price in plans_pricing.items %}
+                <div class="col-md-6 col-lg-4">
+                    <div class="card border-info mb-4 shadow-sm">
+                        <div class="card-body text-center">
+                            <h5 class="card-title">Plan {{ plan|title }}</h5>
+                            <p class="card-text">
+                                <strong>Prix :</strong> 
+                                {% if price == 0 %}
+                                    Gratuit
+                                {% else %}
+                                    {{ price }} USD
+                                {% endif %}
+                            </p>
+                            <hr>
+                            <!-- Description des fonctionnalités -->
+                            <p class="card-text">
+                                {% if plan == 'BASIC' %}
+                                    <strong>Fonctionnalités incluses :</strong>
+                                    <ul class="text-left">
+                                        <li>Accès à l'outil de correspondance automatique</li>
+                                        <li>Suggestions basiques pour les offres</li>
+                                    </ul>
+                                {% elif plan == 'ENTERPRISE' %}
+                                    <strong>Fonctionnalités incluses :</strong>
+                                    <ul class="text-left">
+                                        <li>Chatbot IA avancé pour assister les candidats</li>
+                                        <li>Rapports d'analyse détaillés pour chaque offre</li>
+                                        <li>Accès prioritaire au support client</li>
+                                    </ul>
+                                {% elif plan == 'PRO' %}
+                                    <strong>Fonctionnalités incluses :</strong>
+                                    <ul class="text-left">
+                                        <li>Génération de lettre de motivation personnalisée pour chaque offre</li>
+                                        <li>Rapports d'analyse avancés</li>
+                                    </ul>
+                                {% endif %}
+                            </p>
+                            <hr>
+                            <button type="submit" name="plan" value="{{ plan }}" class="btn btn-info btn-lg btn-block">
+                                Choisir {{ plan|title }}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </form>
+</div>
+{% endblock %}

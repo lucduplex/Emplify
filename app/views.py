@@ -1,33 +1,32 @@
 # Importations standard
 import os
-from io import BytesIO
+import stripe
 
 # Importations Django
 from django.shortcuts import render, get_object_or_404, redirect
-from django.http import HttpResponse, JsonResponse, HttpResponseNotAllowed
+from django.http import HttpResponse, JsonResponse
 from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.conf import settings
-from django.core.files.storage import default_storage
+from django.urls import reverse
 
 # Importations tierces
 import openai
 import pdfplumber
 from docx import Document
-from reportlab.pdfgen import canvas
 
 # Importations des modèles et formulaires
-from .models import User, JobOffer, Candidat, Recruteur, Candidature
-from .forms import JobForm, RegistrationForm, LoginForm, CandidatForm, CandidatureForm, RecruteurForm
+from .models import JobOffer, Candidat, Recruteur, Candidature
+from .forms import JobForm, RegistrationForm, LoginForm, CandidatForm, RecruteurForm
 
 # Importations des utilitaires personnalisés
 from rcw.cv_processing import extract_competences
 from django.db.models import Q
-from .scraper import scrape_indeed_jobs
 
 # Configuration OpenAI
 openai.api_key = settings.OPENAI_API_KEY
+stripe.api_key = settings.STRIPE_SECRET_KEY
 
 
 # ---- Fonctions Utilitaires ----
@@ -222,6 +221,9 @@ def job_list(request):
 
 @login_required
 def generate_cover_letter(request, offre_id):
+    if request.user.plan_abonnement == 'BASIC':
+        messages.warning(request, "Votre abonnement actuel ne permet pas de générer une lettre de motivation. Veuillez mettre à niveau votre abonnement.")
+        return redirect('upgrade_plan')
     """Génère une lettre de motivation via OpenAI."""
     offre = get_object_or_404(JobOffer, id=offre_id)
     candidat = request.user.candidat_profile
@@ -570,3 +572,75 @@ def complete_profile(request):
         return redirect('login')  # Redirection après sauvegarde
 
     return render(request, 'complete_profile.html', {'form': form})
+
+
+@login_required
+def access_chatbot(request):
+    if request.user.plan_abonnement == 'BASIC':
+        messages.warning(request, "Votre abonnement actuel ne permet pas d'utiliser cette fonctionnalité. Veuillez mettre à niveau votre abonnement.")
+        return redirect('upgrade_plan')
+    return render(request, 'chatbot.html')  # Page du chatbot
+
+@login_required
+def upgrade_plan(request):
+    # Ajout des prix pour chaque plan, y compris Basic
+    plans_pricing = {
+        'BASIC': 0,
+        **settings.PLANS_PRICING  # Ajoute Pro et Enterprise depuis les settings
+    }
+    
+    if request.method == 'POST':
+        selected_plan = request.POST.get('plan')
+        if selected_plan not in plans_pricing:
+            messages.error(request, "Plan invalide. Veuillez choisir un plan valide.")
+            return redirect('upgrade_plan')
+
+        # Si le plan est "Basic", redirigez directement sans Stripe
+        if plans_pricing[selected_plan] == 0:
+            request.user.plan_abonnement = selected_plan
+            request.user.save()
+            messages.success(request, "Vous êtes déjà sur le plan Basic.")
+            return redirect('profile')
+
+        # Créer une session Stripe pour les plans payants
+        price = plans_pricing[selected_plan]
+        session = stripe.checkout.Session.create(
+            payment_method_types=['card'],
+            line_items=[{
+                'price_data': {
+                    'currency': 'usd',
+                    'product_data': {
+                        'name': f'Plan {selected_plan.capitalize()}',
+                    },
+                    'unit_amount': price * 100,
+                },
+                'quantity': 1,
+            }],
+            mode='payment',
+            success_url=request.build_absolute_uri(reverse('payment_success', args=[selected_plan])),
+            cancel_url=request.build_absolute_uri(reverse('upgrade_plan')),
+        )
+        return redirect(session.url, code=303)
+
+    return render(request, 'upgrade_plan.html', {
+        'plans_pricing': plans_pricing,
+    })
+
+
+@login_required
+def payment_success(request, plan):
+    plans_pricing = {
+        'BASIC': 0,
+        **settings.PLANS_PRICING
+    }
+    
+    # Vérifiez que le plan est valide
+    if plan not in plans_pricing:
+        messages.error(request, "Plan invalide.")
+        return redirect('upgrade_plan')
+
+    # Met à jour le plan d'abonnement
+    request.user.plan_abonnement = plan
+    request.user.save()
+    messages.success(request, f"Votre abonnement a été mis à jour vers le plan {plan.capitalize()} avec succès !")
+    return redirect('profile')

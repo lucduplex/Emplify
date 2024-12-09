@@ -2,44 +2,99 @@
 
 {% block content %}
 <div class="container my-5">
-  <div class="card shadow-lg">
-    <div class="card-header bg-primary text-white">
-      <h1 class="card-title"><i class="fas fa-briefcase"></i> {{ offre.titre }}</h1>
+  <!-- Card principale -->
+  <div class="card shadow-lg border-0">
+    <div class="card-header bg-gradient-primary text-white text-center py-4">
+      <h1 class="card-title display-5"><i class="fas fa-briefcase"></i> {{ offre.titre }}</h1>
     </div>
     <div class="card-body">
-      <p><strong>Entreprise :</strong> {{recruteur.entreprise }}</p>
-      <p><strong>Description :</strong> {{ offre.description }}</p>
-      <p><strong>Compétences requises :</strong> {{ offre.competences_requises }}</p>
-      <p><strong>Salaire :</strong> {{ offre.salaire }} $</p>
-      <p><strong>Localisation :</strong> {{ offre.localisation }}</p>
-      <p><strong>Date de publication :</strong> {{ offre.date_publication|date:"d/m/Y" }}</p>
-      
+      <!-- Informations sur l'offre -->
+      <div class="row mb-4">
+        <div class="col-md-6">
+          <p><strong class="text-primary">Entreprise :</strong> {{ recruteur.entreprise }}</p>
+          <p><strong class="text-primary">Localisation :</strong> {{ offre.localisation }}</p>
+        </div>
+        <div class="col-md-6">
+          <p><strong class="text-primary">Salaire :</strong> {{ offre.salaire }} $</p>
+          <p><strong class="text-primary">Date de publication :</strong> {{ offre.date_publication|date:"d/m/Y" }}</p>
+        </div>
+      </div>
+      <hr>
+      <p><strong class="text-primary">Description :</strong></p>
+      <p class="text-muted">{{ offre.description }}</p>
+      <hr>
+      <p><strong class="text-primary">Compétences requises :</strong></p>
+      <p class="text-muted">{{ offre.competences_requises }}</p>
+
+      <!-- Actions pour les candidats -->
       {% if user.role == 'CANDIDAT' %}
-      <!-- Formulaire pour postuler -->
-      <form method="POST" action="{% url 'postuler_offre' offre.id %}" class="mt-4">
-        {% csrf_token %}
-        <button type="submit" class="btn btn-success btn-lg btn-block">
-          <i class="fas fa-paper-plane"></i> Postuler à cette offre
-        </button>
-      </form>
+        <div class="actions mt-5">
+          <!-- Formulaire pour postuler -->
+          <form method="POST" action="{% url 'postuler_offre' offre.id %}" class="mt-4">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-success btn-lg btn-block">
+              <i class="fas fa-paper-plane"></i> Postuler à cette offre
+            </button>
+          </form>
 
-      <!-- Bouton pour accéder au chatbot -->
-      <a href="{% url 'chatbot_page' %}" class="btn btn-info btn-lg btn-block mt-3">
-        <i class="fas fa-comments"></i> Demander des conseils au chatbot
-      </a>
+          {% if user.plan_abonnement == 'BASIC' %}
+            <!-- Message pour plan Basic -->
+            <div class="alert alert-warning mt-4 text-center">
+              <strong>Fonctionnalités restreintes :</strong>
+              <p>Votre abonnement actuel ne vous permet pas d'utiliser le chatbot ou de générer une lettre de motivation.</p>
+              <a href="{% url 'upgrade_plan' %}" class="btn btn-primary mt-3">
+                <i class="fas fa-arrow-up"></i> Mettre à niveau votre abonnement
+              </a>
+            </div>
+          {% else %}
+            <!-- Formulaire pour générer une lettre de motivation -->
+            <form method="GET" action="{% url 'generate_cover_letter' offre.id %}" class="mt-4">
+              <button type="submit" class="btn btn-outline-primary btn-lg btn-block">
+                <i class="fas fa-file-alt"></i> Générer une lettre de motivation
+              </button>
+            </form>
 
-      <!-- Formulaire pour générer une lettre de motivation -->
-      <form method="GET" action="{% url 'generate_cover_letter' offre.id %}" class="mt-4">
-        <button type="submit" class="btn btn-outline-primary btn-lg btn-block">
-          <i class="fas fa-file-alt"></i> Générer une lettre de motivation
-        </button>
-      </form>
+            {% if user.plan_abonnement != 'PRO' %}
+              <!-- Bouton pour le chatbot -->
+              <a href="{% url 'chatbot_page' %}" class="btn btn-info btn-lg btn-block mt-3">
+                <i class="fas fa-comments"></i> Accéder au chatbot
+              </a>
+            {% endif %}
+          {% endif %}
+        </div>
+      {% elif user.role == 'RECRUTEUR' %}
+        <div class="actions mt-5">
+          {% if user.plan_abonnement == 'BASIC' %}
+            <!-- Message pour plan Basic -->
+            <div class="alert alert-warning mt-4 text-center">
+              <strong>Fonctionnalités restreintes :</strong>
+              <p>Votre abonnement actuel ne vous permet pas d'utiliser le chatbot.</p>
+              <a href="{% url 'upgrade_plan' %}" class="btn btn-primary mt-3">
+                <i class="fas fa-arrow-up"></i> Mettre à niveau votre abonnement
+              </a>
+            </div>
+          {% elif user.plan_abonnement == 'ENTERPRISE' %}
+            <!-- Bouton pour le chatbot -->
+            <a href="{% url 'chatbot_page' %}" class="btn btn-info btn-lg btn-block mt-3">
+              <i class="fas fa-comments"></i> Accéder au chatbot
+            </a>
+          {% endif %}
+        </div>
       {% endif %}
 
+      <!-- Bouton pour changer le plan d'abonnement -->
+      <div class="text-center mt-4">
+        <a href="{% url 'upgrade_plan' %}" class="btn btn-outline-warning btn-lg">
+          <i class="fas fa-crown"></i> Changer mon plan d'abonnement
+        </a>
+      </div>
+
       <!-- Bouton pour revenir à la liste des offres -->
-      <a href="{% url 'job_list' %}" class="btn btn-secondary mt-4 btn-block">
-        <i class="fas fa-arrow-left"></i> Retour à la liste des offres
-      </a>
+      <div class="text-center mt-5">
+        <a href="{% url 'job_list' %}" class="btn btn-secondary btn-lg">
+          <i class="fas fa-arrow-left"></i> Retour à la liste des offres
+        </a>
+      </div>
     </div>
   </div>
 </div>
